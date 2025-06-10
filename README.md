@@ -11,7 +11,7 @@ run "py main.py [file location]"
 RETURNS: 
 a folder with .wav file name as dump with log
 
-————————————————————————————————————————————————————————————————————————————————————————————————
+———————————————————————————————————————————————————
 
 Recently Added: mp4_to_wav.py
 
