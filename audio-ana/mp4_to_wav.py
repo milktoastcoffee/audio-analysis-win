@@ -5,7 +5,7 @@ import subprocess
 def convert_all_mp4_to_wav(input_dir):
     if not os.path.isdir(input_dir):
         print("❌ Error: Provided path is not a directory.")
-        return
+        sys.exit(1)
 
     output_dir = os.path.join(input_dir, "converted_wav")
     os.makedirs(output_dir, exist_ok=True)
@@ -14,7 +14,7 @@ def convert_all_mp4_to_wav(input_dir):
 
     if not mp4_files:
         print("❌ No MP4 files found.")
-        return
+        sys.exit(1)
 
     for file in mp4_files:
         input_path = os.path.join(input_dir, file)
@@ -24,23 +24,36 @@ def convert_all_mp4_to_wav(input_dir):
         print(f"🎧 Converting: {file} → {output_filename}")
 
         try:
-            # Use ffmpeg to extract audio without re-encoding
             subprocess.run([
                 "ffmpeg",
-                "-y",  # overwrite output if exists
+                "-y",
                 "-i", input_path,
-                "-map", "0:a:0",     # map only the first audio stream
-                "-c:a", "copy", # does not compress audio
+                "-vn",
+                "-acodec", "pcm_s16le",
+                "-ar", "44100",
+                "-ac", "2",
                 output_path
-            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-
-        except subprocess.CalledProcessError:
-            print(f"❌ Failed to convert: {file}")
+            ], check=True)
+        
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to convert {file}")
+            continue
+        except KeyboardInterrupt:
+            print("\n🛑 Interrupted by user. Exiting cleanly.")
+            sys.exit(130)
+        except Exception as e:
+            print(f"❌ Unexpected error with {file}: {e}")
+            continue
 
     print(f"\n✅ All done! WAV files saved to: {output_dir}")
+    sys.exit(0)  # Clean exit
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage:\n  python batch_mp4_to_wav.py <directory_with_mp4_files>")
-    else:
+    try:
+        if len(sys.argv) != 2:
+            print("Usage:\n  python batch_mp4_to_wav.py <directory_with_mp4_files>")
+            sys.exit(1)
         convert_all_mp4_to_wav(sys.argv[1])
+    except KeyboardInterrupt:
+        print("\n🛑 Interrupted by user during directory validation.")
+        sys.exit(130)
